@@ -13,8 +13,7 @@ def encode_elf_to_base64(file_path):
     """
     try:
         with open(file_path, 'rb') as f:
-            encoded_data = base64.b64encode(f.read())
-        return encoded_data
+            return base64.b64encode(f.read())
     except Exception as e:
         print(f"Error encoding file: {e}")
         sys.exit(1)
@@ -44,9 +43,11 @@ def execute_elf_from_memory(encoded_data):
             tmp_file_path = tmp_file.name
             decode_base64_to_file(encoded_data, tmp_file_path)
             os.chmod(tmp_file_path, 0o755)  # Ensure the file is executable
-            subprocess.run([tmp_file_path])
-    except Exception as e:
+            subprocess.run([tmp_file_path], check=True)
+    except subprocess.CalledProcessError as e:
         print(f"Error executing file: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
     finally:
         if os.path.exists(tmp_file_path):
             os.remove(tmp_file_path)
@@ -61,9 +62,5 @@ if __name__ == "__main__":
         print(f"Error: File '{elf_file_path}' not found.")
         sys.exit(1)
 
-    try:
-        encoded_data = encode_elf_to_base64(elf_file_path)
-        execute_elf_from_memory(encoded_data)
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        sys.exit(1)
+    encoded_data = encode_elf_to_base64(elf_file_path)
+    execute_elf_from_memory(encoded_data)
